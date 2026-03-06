@@ -1,5 +1,6 @@
 ﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ProductGrpc.Data;
 using ProductGrpc.Protos;
@@ -43,6 +44,26 @@ namespace ProductGrpc.Services
             };
 
             return productModel;
+        }
+
+        public override async Task GetAllProducts(GetAllProductsRequest request, IServerStreamWriter<ProductModel> responseStream, ServerCallContext context)
+        {
+            var productList = await _productsContext.Product.ToListAsync();
+
+            foreach (var product in productList)
+            {
+                var productModel = new ProductModel
+                {
+                    ProductId = product.ProductId,
+                    Name = product.Name,
+                    Description = product.Description,
+                    Price = product.Price,
+                    Status = ProductStatus.Instock,
+                    CreatedTime = Timestamp.FromDateTime(product.CreatedTime)
+                };
+
+                await responseStream.WriteAsync(productModel);
+            }
         }
     }
 }
