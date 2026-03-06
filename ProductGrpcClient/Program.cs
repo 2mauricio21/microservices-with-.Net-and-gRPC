@@ -1,0 +1,32 @@
+﻿using Grpc.Net.Client;
+using ProductGrpc.Protos;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace ProductGrpcClient
+{
+    internal class Program
+    {
+        static async Task Main(string[] args)
+        {
+            Console.WriteLine("Waiting for server is running");
+            Thread.Sleep(2000);
+
+
+            using var channel = GrpcChannel.ForAddress("https://localhost:5001");
+            var client = new ProductProtoService.ProductProtoServiceClient(channel);
+
+            // GetProductAssync
+            Console.WriteLine("GetProductAssync started..");
+            var responde = await client.GetProductAsync(
+                new GetProductRequest
+                {
+                    ProductId = 1
+                });
+
+            Console.WriteLine("GetProductAssync Response : " + responde.ToString());
+            Console.ReadKey();
+        }
+    }
+}
