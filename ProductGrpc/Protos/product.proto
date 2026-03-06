@@ -54,7 +54,7 @@ message ProductModel {
   int32 productId = 1;
   string name = 2;
   string description = 3;
-  double price = 4;
+  float price = 4;
   ProductStatus status = 5;
   google.protobuf.Timestamp createdTime = 6;
 }
