@@ -34,7 +34,7 @@ namespace ProductGrpc.Services
             var product = await _productsContext.Product.FindAsync(request.ProductId);
             if (product == null)
             {
-                throw new RpcException(new Status(StatusCode.NotFound, $"Product with ID {request.ProductId} not found."));
+                throw new RpcException(new Status(StatusCode.NotFound, $"Product with ID {request.ProductId} is not found."));
             }
 
             var productModel = _mapper.Map<ProductModel>(product);
@@ -82,6 +82,51 @@ namespace ProductGrpc.Services
             //};
             var productModel = _mapper.Map<ProductModel>(product);
             return productModel;
+        }
+
+        public override async Task<ProductModel> UpdateProduct(UpdateProductRequest request, ServerCallContext context)
+        {
+            var product = _mapper.Map<Product>(request.Product);
+
+            bool isExist = await _productsContext.Product.AnyAsync(p => p.ProductId == product.ProductId);
+            if (!isExist)
+            {
+                throw new RpcException(new Status(StatusCode.NotFound, $"Product with ID {product.ProductId} not found."));
+            }
+
+            _productsContext.Entry(product).State = EntityState.Modified;
+
+            try
+            {
+                await _productsContext.SaveChangesAsync();
+
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+
+                throw;
+            }
+
+            var productModel = _mapper.Map<ProductModel>(product);
+            return productModel;
+        }
+
+        public override async Task<DeleteProductResponse> DeleteProduct(DeleteProductRequest request, ServerCallContext context)
+        {
+            var product = await _productsContext.Product.FindAsync(request.ProductId);
+            if (product == null)
+            {
+                throw new RpcException(new Status(StatusCode.NotFound, $"Product with ID {request.ProductId} not found."));
+            }
+
+            _productsContext.Product.Remove(product);
+            var deleteCount = await _productsContext.SaveChangesAsync();
+
+            var response = new DeleteProductResponse
+            {
+                Success = deleteCount > 0
+            };
+            return response;
         }
     }
 }
