@@ -1,6 +1,8 @@
+using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ProductGrpc.Protos;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -20,9 +22,22 @@ namespace ProductWorkerService
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            Console.WriteLine("Waiting for server is running");
+            Thread.Sleep(2000);
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+
+                using var channel = GrpcChannel.ForAddress(_config.GetValue<string>("WorkerService:ServerUrl"));
+                var client = new ProductProtoService.ProductProtoServiceClient(channel);
+
+                var response = await client.GetProductAsync(
+                    new GetProductRequest
+                    {
+                        ProductId = 1
+                    });
+                Console.WriteLine("GetProductAsync Response: " + response.ToString());
+
 
                 //_config.GetValue<int>("WorkerService:TaskInterval"); // pega a configuração do appsettings.json
                 await Task.Delay(_config.GetValue<int>("WorkerService:TaskInterval"), stoppingToken);
