@@ -87,5 +87,49 @@ namespace ShoppingCartGrpc.Services
             };
             return response;
         }
+
+        public override async Task<AddItemIntoShoppingCartResponse> AddItemIntoShoppingCart(IAsyncStreamReader<AddItemIntoShoppingCartRequest> requestStream, ServerCallContext context)
+        {
+            // Get sc if exist or not
+            // Check the item if exist in sc or not
+            //   if item is exist +1 quantity
+            //   if item is not exist add new item into sc
+            //     Check discont and calculate the item price
+
+            while (await requestStream.MoveNext())
+            {
+                var shoppingCart = await _shoppingCartDbContext.ShoppingCart
+                    .FirstOrDefaultAsync(s => s.UserName == requestStream.Current.UserName);
+
+                if (shoppingCart == null)
+                {
+                    throw new RpcException(new Status(StatusCode.NotFound, $"ShoppingCart witch UserName={requestStream.Current.UserName} is not found."));
+                }
+
+                var newAddedCartItem = _mapper.Map<ShoppingCartItem>(requestStream.Current.NewCartItem);
+                var cartItem = shoppingCart.Items.FirstOrDefault(i => i.ProductId == newAddedCartItem.ProductId);
+                if (cartItem != null)
+                {
+                    cartItem.Quantity++;
+                }
+                else
+                {
+                    // grpc call discount service -- check discount and calculate the item last price
+                    float discount = 100;
+                    newAddedCartItem.Price -= discount;
+                    shoppingCart.Items.Add(newAddedCartItem);
+                }
+            }
+
+            var insertCount = await _shoppingCartDbContext.SaveChangesAsync();
+
+            var response = new AddItemIntoShoppingCartResponse
+            {
+                Success = insertCount > 0,
+                InsertCount = insertCount
+            };
+
+            return response;
+        }
     }
 }
