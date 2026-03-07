@@ -1,5 +1,4 @@
-﻿using Google.Protobuf.WellKnownTypes;
-using Grpc.Net.Client;
+﻿using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -14,11 +13,13 @@ namespace ProductWorkerService
     {
         private readonly ILogger<Worker> _logger;
         private readonly IConfiguration _config;
+        private readonly ProductFactory _factory;
 
-        public Worker(ILogger<Worker> logger, IConfiguration configuration)
+        public Worker(ILogger<Worker> logger, IConfiguration config, ProductFactory factory)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _config = configuration ?? throw new ArgumentNullException(nameof(configuration));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -32,19 +33,8 @@ namespace ProductWorkerService
                 using var channel = GrpcChannel.ForAddress(_config.GetValue<string>("WorkerService:ServerUrl"));
                 var client = new ProductProtoService.ProductProtoServiceClient(channel);
 
-                Console.WriteLine("AddProductAsync started...");
-                var addProductResponse = await client.AddProductAsync(new AddProductRequest
-                {
-                    Product = new ProductModel
-                    {
-                        Name = _config.GetValue<string>("WorkerService:ProductName") + DateTimeOffset.Now,
-                        Description = "Apple M1 Pro chip with 10‑core CPU, 16‑core GPU, and 16‑core Neural Engine",
-                        Price = 2399.99f,
-                        Status = ProductStatus.Instock,
-                        CreatedTime = Timestamp.FromDateTime(DateTime.UtcNow)
-                    }
-                });
-
+                _logger.LogInformation("AddProductAsync started..");
+                var addProductResponse = await client.AddProductAsync(await _factory.Generate());
                 Console.WriteLine("AddProductAsync Response : " + addProductResponse.ToString());
 
                 //_config.GetValue<int>("WorkerService:TaskInterval"); // pega a configuração do appsettings.json
