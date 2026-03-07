@@ -1,3 +1,4 @@
+﻿using Google.Protobuf.WellKnownTypes;
 using Grpc.Net.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
@@ -31,15 +32,22 @@ namespace ProductWorkerService
                 using var channel = GrpcChannel.ForAddress(_config.GetValue<string>("WorkerService:ServerUrl"));
                 var client = new ProductProtoService.ProductProtoServiceClient(channel);
 
-                var response = await client.GetProductAsync(
-                    new GetProductRequest
+                Console.WriteLine("AddProductAsync started...");
+                var addProductResponse = await client.AddProductAsync(new AddProductRequest
+                {
+                    Product = new ProductModel
                     {
-                        ProductId = 1
-                    });
-                Console.WriteLine("GetProductAsync Response: " + response.ToString());
+                        Name = _config.GetValue<string>("WorkerService:ProductName") + DateTimeOffset.Now,
+                        Description = "Apple M1 Pro chip with 10‑core CPU, 16‑core GPU, and 16‑core Neural Engine",
+                        Price = 2399.99f,
+                        Status = ProductStatus.Instock,
+                        CreatedTime = Timestamp.FromDateTime(DateTime.UtcNow)
+                    }
+                });
 
+                Console.WriteLine("AddProductAsync Response : " + addProductResponse.ToString());
 
-                //_config.GetValue<int>("WorkerService:TaskInterval"); // pega a configura��o do appsettings.json
+                //_config.GetValue<int>("WorkerService:TaskInterval"); // pega a configuração do appsettings.json
                 await Task.Delay(_config.GetValue<int>("WorkerService:TaskInterval"), stoppingToken);
             }
         }
