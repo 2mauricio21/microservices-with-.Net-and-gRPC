@@ -22,7 +22,7 @@ message AddItemIntoShoppingCartRequest {
 }
 
 message AddItemIntoShoppingCartResponse {
-	bool sucess = 1;
+	bool success = 1;
 	int32 insertCount = 2;
 }
 
@@ -32,7 +32,7 @@ message RemoveItemIntoShoppingCartRequest {
 }
 
 message RemoveItemIntoShoppingCartResponse {
-	bool sucess = 1;
+	bool success = 1;
 }
 
 message ShoppingCartModel {
