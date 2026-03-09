@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Abp.ZeroCore.IdentityServer4" Version="5.14.0" />
     <PackageReference Include="Google.Protobuf" Version="3.14.0" />
     <PackageReference Include="Grpc.Net.ClientFactory" Version="2.33.1" />
     <PackageReference Include="Grpc.Tools" Version="2.33.1">
