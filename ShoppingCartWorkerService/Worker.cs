@@ -57,7 +57,7 @@ namespace ShoppingCartWorkerService
                     var addNewScItem = new AddItemIntoShoppingCartRequest
                     {
                         UserName = _config.GetValue<string>("WorkerService:UserName"),
-                        DiscountCode = "CODE_100",
+                        DiscountCode = "Code_100",
                         NewCartItem = new ShoppingCartItemModel
                         {
                             ProductId = responseData.ProductId,
@@ -74,7 +74,7 @@ namespace ShoppingCartWorkerService
                 await scClientStream.RequestStream.CompleteAsync();
 
                 var addItemIntoShoppingCartResponse = await scClientStream;
-                _logger.LogInformation("AddItemIntoShoppingCart Client Stream Response: {addItemIntoShoppingCartResponse}", addItemIntoShoppingCartResponse);)
+                _logger.LogInformation("AddItemIntoShoppingCart Client Stream Response: {addItemIntoShoppingCartResponse}", addItemIntoShoppingCartResponse);
 
                 await Task.Delay(_config.GetValue<int>("WorkerService:TaskInterval"), stoppingToken);
             }
