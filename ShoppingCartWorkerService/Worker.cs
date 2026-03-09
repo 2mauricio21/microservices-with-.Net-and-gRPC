@@ -32,18 +32,20 @@ namespace ShoppingCartWorkerService
             while (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+
+                // 0 Get Token from IS4
                 // 1 Create SC if not exists
                 // 2 Retrieve products from product grpc with server stream
                 // 3 Add sc items into SC with client stream
 
-                // 0 Get Token from IS4
-                var token = await GetTokenFromIS4();
-
                 using var scChanel = GrpcChannel.ForAddress(_config.GetValue<string>("WorkerService:ShoppingCartServerUrl"));
                 var scClient = new ShoppingCartProtoService.ShoppingCartProtoServiceClient(scChanel);
 
+                // 0 Get Token from IS4
+                var token = await GetTokenFromIS4();
+
                 // 1 Create SC if not exists
-                var scModel = await GetOrCreateShoppingCartAsync(scClient);
+                var scModel = await GetOrCreateShoppingCartAsync(scClient, token);
 
                 // oppen sc client stream
                 using var scClientStream = scClient.AddItemIntoShoppingCart();
@@ -115,7 +117,7 @@ namespace ShoppingCartWorkerService
             return tokenResponse.AccessToken;
         }
 
-        private async Task<ShoppingCartModel> GetOrCreateShoppingCartAsync(ShoppingCartProtoService.ShoppingCartProtoServiceClient scClient)
+        private async Task<ShoppingCartModel> GetOrCreateShoppingCartAsync(ShoppingCartProtoService.ShoppingCartProtoServiceClient scClient, string token)
         {
             // try to get sc
             // create sc
@@ -124,10 +126,14 @@ namespace ShoppingCartWorkerService
             try
             {
                 _logger.LogInformation("GetShoppinngCartAsync started...");
+
+                var headers = new Metadata();
+                headers.Add("Authorization", $"Bearer {token}");
+
                 shoppingCartModel = await scClient.GetShoppingCartAsync(new GetShoppingCartRequest
                 {
                     UserName = _config.GetValue<string>("WorkerService:UserName")
-                });
+                }, headers);
 
                 _logger.LogInformation("GetShoppinngCartAsync Response: {shoppingCartModel}", shoppingCartModel);
 
